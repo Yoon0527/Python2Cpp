@@ -78,22 +78,6 @@ std::vector<unsigned char> read_bin(const std::string& filename) {
 	return std::vector<unsigned char>((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
 }
 
-std::vector<unsigned char> base64_decode(const std::string& encoded_data) {
-	BIO* bio = BIO_new_mem_buf(encoded_data.data(), static_cast<int>(encoded_data.size()));
-	BIO* b64 = BIO_new(BIO_f_base64());
-	bio = BIO_push(b64, bio);
-
-	BUF_MEM* bptr = nullptr;
-	BIO_set_close(bio, BIO_NOCLOSE);
-	BIO_get_mem_ptr(bio, &bptr);
-
-	std::vector<unsigned char> decoded(bptr->length);
-	int decoded_length = BIO_read(bio, decoded.data(), static_cast<int>(bptr->length));
-	decoded.resize(decoded_length);
-
-	BIO_free_all(bio);
-	return decoded;
-}
 
 
 //std::vector<uint8_t> pad(const std::vector<uint8_t>& data, size_t block_size) {

@@ -1,22 +1,20 @@
-﻿#include "utils.h"
+﻿#pragma once
+#include "utils.h"
 #include "frame_utils.h"
-#include "AESCipher.h"
+//#include "AESCipher.h"
 #include "load_model.h"
-
+#include <onnxruntime_cxx_api.h>
 #include <iostream>
 #include<opencv2/opencv.hpp>
 #include<filesystem>
-#include <onnxruntime_cxx_api.h>
-
-namespace fs = std::filesystem;
 
 int main()
 {
     int BS = 16;
     const std::string key = "CAIMI Alphaon V1.0 Model";
 
-    //Ort::Session ort_session_detection = load_detection_model(key, env, session_options);
-    //Ort::Session ort_session_classification = load_classification_model(key);
+    Ort::Session ort_session_detection = load_detection_model(key);
+    Ort::Session ort_session_classification = load_classification_model(key);
 
 
     std::vector<std::string> class_list = { "fundus", "etc" };
