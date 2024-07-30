@@ -1,16 +1,23 @@
 ﻿#include "utils.h"
 #include "frame_utils.h"
+#include "AESCipher.h"
+#include "load_model.h"
 
 #include <iostream>
 #include<opencv2/opencv.hpp>
 #include<filesystem>
-
+#include <onnxruntime_cxx_api.h>
 
 namespace fs = std::filesystem;
 
 int main()
 {
     int BS = 16;
+    const std::string key = "CAIMI Alphaon V1.0 Model";
+
+    //Ort::Session ort_session_detection = load_detection_model(key, env, session_options);
+    //Ort::Session ort_session_classification = load_classification_model(key);
+
 
     std::vector<std::string> class_list = { "fundus", "etc" };
 
@@ -49,6 +56,7 @@ int main()
         std::pair<cv::Mat, double> preprocess_result = preprocess_image(frame, 256);
         cv::Mat preprocess_frame = preprocess_result.first;
         double scale = preprocess_result.second;
+        
         
 
     }

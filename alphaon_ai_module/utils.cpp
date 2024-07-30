@@ -1,4 +1,11 @@
 #include "utils.h"
+#include <openssl/evp.h>
+#include <openssl/sha.h>
+#include <openssl/aes.h>
+#include <openssl/rand.h>
+#include <openssl/bio.h>
+#include <openssl/buffer.h>
+#include <openssl/err.h>
 
 std::string get_date() {
 	std::string return_date;
@@ -63,3 +70,47 @@ void show_image(cv::Mat input_image) {
 }
 
 
+std::vector<unsigned char> read_bin(const std::string& filename) {
+	std::ifstream file(filename, std::ios::binary);
+	if (!file) {
+		throw std::runtime_error("Failed to open file: " + filename);
+	}
+	return std::vector<unsigned char>((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+}
+
+std::vector<unsigned char> base64_decode(const std::string& encoded_data) {
+	BIO* bio = BIO_new_mem_buf(encoded_data.data(), static_cast<int>(encoded_data.size()));
+	BIO* b64 = BIO_new(BIO_f_base64());
+	bio = BIO_push(b64, bio);
+
+	BUF_MEM* bptr = nullptr;
+	BIO_set_close(bio, BIO_NOCLOSE);
+	BIO_get_mem_ptr(bio, &bptr);
+
+	std::vector<unsigned char> decoded(bptr->length);
+	int decoded_length = BIO_read(bio, decoded.data(), static_cast<int>(bptr->length));
+	decoded.resize(decoded_length);
+
+	BIO_free_all(bio);
+	return decoded;
+}
+
+
+//std::vector<uint8_t> pad(const std::vector<uint8_t>& data, size_t block_size) {
+//	size_t padding_size = block_size - (data.size() % block_size);
+//	std::vector<uint8_t> padded_data = data;
+//	padded_data.insert(padded_data.end(), padding_size, static_cast<uint8_t>(padding_size));
+//	return padded_data;
+//}
+//
+//std::vector<uint8_t> unpad(const std::vector<uint8_t>& padded_data) {
+//	if (padded_data.empty()) {
+//		throw std::invalid_argument("Padded data is empty");
+//	}
+//	uint8_t padding_size = padded_data.back();
+//	if (padding_size > padded_data.size()) {
+//		throw std::invalid_argument("Invalid padding size");
+//	}
+//	std::vector<uint8_t> data(padded_data.begin(), padded_data.end() - padding_size);
+//	return data;
+//}
