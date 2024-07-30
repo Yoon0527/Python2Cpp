@@ -361,3 +361,8 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+/alphaon_ai_module/model/classification.bin
+/alphaon_ai_module/model/colon_detection.bin
+/alphaon_ai_module/model/colon_classification.bin
+/alphaon_ai_module/model/colonV5_detection.bin
+/alphaon_ai_module/model/detection.bin
