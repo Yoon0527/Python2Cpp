@@ -1,4 +1,5 @@
 #include "utils.h"
+#include "npy.hpp"
 #include <openssl/evp.h>
 #include <openssl/sha.h>
 #include <openssl/aes.h>
@@ -69,32 +70,129 @@ void show_image(cv::Mat input_image) {
 	cv::waitKey(0);
 }
 
+std::vector<double> anchor_read(const std::string& path) {
+	npy::npy_data anchor_npy = npy::read_npy<double>(path);
 
-std::vector<unsigned char> read_bin(const std::string& filename) {
-	std::ifstream file(filename, std::ios::binary);
-	if (!file) {
-		throw std::runtime_error("Failed to open file: " + filename);
-	}
-	return std::vector<unsigned char>((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+	std::vector<double> anchor_vec = anchor_npy.data;
+	
+	return anchor_vec;
+}
+
+NpyArray load_npy(const std::string& filename) {
+    std::ifstream file(filename, std::ios::binary);
+    if (!file.is_open()) {
+        throw std::runtime_error("Unable to open file " + filename);
+    }
+
+    // Read magic string
+    char magic[6];
+    file.read(magic, 6);
+    if (std::string(magic, 6) != "\x93NUMPY") {
+        throw std::runtime_error("Invalid NPY file.");
+    }
+
+    // Read version number
+    uint8_t version[2];
+    file.read(reinterpret_cast<char*>(version), 2);
+
+    // Read header length
+    uint16_t header_len;
+    file.read(reinterpret_cast<char*>(&header_len), 2);
+
+    // Read header
+    std::string header(header_len, ' ');
+    file.read(&header[0], header_len);
+
+    // Output the full header for debugging
+    std::cout << "Header: " << header << std::endl;
+
+    // Parse header to find dtype and shape
+    auto loc = header.find("descr");
+    if (loc == std::string::npos) {
+        throw std::runtime_error("Unable to find dtype in header.");
+    }
+    loc = header.find("'", loc + 6);  // Find the start of dtype
+    auto loc1 = header.find("'", loc + 1);  // Find the end of dtype
+    auto dtype = header.substr(loc + 1, loc1 - (loc + 1));
+    std::cout << "Extracted dtype: " << dtype << std::endl;  // Debug info
+
+    DataType data_type = parse_dtype(dtype);
+    if (data_type == DataType::UNKNOWN) {
+        throw std::runtime_error("Unsupported data type: " + dtype);
+    }
+
+    loc = header.find("shape");
+    if (loc == std::string::npos) {
+        throw std::runtime_error("Unable to find shape in header.");
+    }
+    loc = header.find('(', loc);
+    auto loc2 = header.find(')', loc);
+    auto shape_str = header.substr(loc + 1, loc2 - loc - 1);
+
+    NpyArray array;
+    std::istringstream shape_stream(shape_str);
+    char c;
+    size_t dim;
+    while (shape_stream >> dim) {
+        array.shape.push_back(dim);
+        shape_stream >> c;  // Skip comma
+    }
+
+    // Determine number of elements
+    size_t num_elements = 1;
+    for (auto s : array.shape) {
+        num_elements *= s;
+    }
+    array.data.resize(num_elements);
+
+    // Read data based on type
+    switch (data_type) {
+    case DataType::FLOAT32: {
+        std::vector<float> temp_data(num_elements);
+        file.read(reinterpret_cast<char*>(temp_data.data()), num_elements * sizeof(float));
+        for (size_t i = 0; i < num_elements; ++i) {
+            array.data[i] = static_cast<double>(temp_data[i]);
+        }
+        break;
+    }
+    case DataType::FLOAT64:
+        file.read(reinterpret_cast<char*>(array.data.data()), num_elements * sizeof(double));
+        break;
+    case DataType::INT32: {
+        std::vector<int32_t> temp_data(num_elements);
+        file.read(reinterpret_cast<char*>(temp_data.data()), num_elements * sizeof(int32_t));
+        for (size_t i = 0; i < num_elements; ++i) {
+            array.data[i] = static_cast<double>(temp_data[i]);
+        }
+        break;
+    }
+    case DataType::INT64: {
+        std::vector<int64_t> temp_data(num_elements);
+        file.read(reinterpret_cast<char*>(temp_data.data()), num_elements * sizeof(int64_t));
+        for (size_t i = 0; i < num_elements; ++i) {
+            array.data[i] = static_cast<double>(temp_data[i]);
+        }
+        break;
+    }
+    default:
+        throw std::runtime_error("Unsupported data type: " + dtype);
+    }
+
+    return array;
 }
 
 
 
-//std::vector<uint8_t> pad(const std::vector<uint8_t>& data, size_t block_size) {
-//	size_t padding_size = block_size - (data.size() % block_size);
-//	std::vector<uint8_t> padded_data = data;
-//	padded_data.insert(padded_data.end(), padding_size, static_cast<uint8_t>(padding_size));
-//	return padded_data;
-//}
-//
-//std::vector<uint8_t> unpad(const std::vector<uint8_t>& padded_data) {
-//	if (padded_data.empty()) {
-//		throw std::invalid_argument("Padded data is empty");
-//	}
-//	uint8_t padding_size = padded_data.back();
-//	if (padding_size > padded_data.size()) {
-//		throw std::invalid_argument("Invalid padding size");
-//	}
-//	std::vector<uint8_t> data(padded_data.begin(), padded_data.end() - padding_size);
-//	return data;
-//}
+DataType parse_dtype(const std::string& dtype) {
+    static std::map<std::string, DataType> dtype_map = {
+        {"<f4", DataType::FLOAT32},
+        {"<f8", DataType::FLOAT64},
+        {"<i4", DataType::INT32},
+        {"<i8", DataType::INT64}
+    };
+    auto it = dtype_map.find(dtype);
+    if (it != dtype_map.end()) {
+        return it->second;
+    }
+    return DataType::UNKNOWN;
+}

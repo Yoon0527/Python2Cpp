@@ -113,7 +113,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\opencv\build\include;C:\OpenSSL-Win64\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\cnpy-master\cnpy-master;C:\opencv\build\include;C:\OpenSSL-Win64\include;C:\zlib131\zlib-1.3.1;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
@@ -144,6 +144,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\..\..\..\..\..\zlib131\zlib-1.3.1\adler32.c" />
+    <ClCompile Include="..\..\..\..\..\..\..\zlib131\zlib-1.3.1\zutil.c" />
     <ClCompile Include="AESCipher.cpp" />
     <ClCompile Include="alphaon_ai_module.cpp" />
     <ClCompile Include="base64.cpp" />

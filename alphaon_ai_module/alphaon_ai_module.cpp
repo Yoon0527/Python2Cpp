@@ -7,6 +7,7 @@
 #include <iostream>
 #include<opencv2/opencv.hpp>
 #include<filesystem>
+#include <cnpy.h>
 
 int main()
 {
@@ -17,11 +18,16 @@ int main()
     Ort::Session ort_session_classification = load_classification_model(key);
 
 
-    std::vector<std::string> class_list = { "fundus", "etc" };
+    std::vector<std::string> class_list = { "fundus","etc","instruments","NBI","close","nonendo","bleeding","esophagus","squamocolumnar_junction","middle_upper_body",
+            "lower_body","antrum","duodenal_bulb","duodenal_descending","angulus","middle_upper_body_retro" };
 
+    std::vector<std::string> location_spot_check_list = { "","esophagus","middle_upper_body","lower_body","antrum","angulus","middle_upper_body_retro","fundus",
+                          "squamocolumnar_junction","duodenal_bulb","duodenal_descending" };
     std::vector<double> score_threshold_list = { 0, 0.45, 0.42, 0.39, 0.35, 0.32, 0.28, 0.24, 0.21, 0.17, 0.13 };
 
- 
+    std::string anchor_path = "./anchor/anchors_input_256_default.npy";
+    NpyArray array = load_npy(anchor_path);
+
 
     double threshold = 0.28;
 
